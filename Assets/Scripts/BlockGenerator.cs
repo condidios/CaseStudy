@@ -1,8 +1,8 @@
 using System;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.UIElements;
+using Unity.VisualScripting;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class BlockGenerator : MonoBehaviour
@@ -11,12 +11,10 @@ public class BlockGenerator : MonoBehaviour
     public Transform blockParent;   // Assign a parent transform for better hierarchy organization
     public GridManager gridManager;
 
-    private void Start()
-    {
-        Block generatedBlock = GenerateBlock(gridManager);
-        InstantiateBlock(generatedBlock);
-        
-    }
+    public Color[] allColors = { Color.red, Color.blue, Color.yellow, Color.green };
+
+    private GameObject currentBlockObject; // The block currently being moved
+    private Block currentBlockData;        // Data representation of the current block
 
     public enum SegmentFlag
     {
@@ -30,6 +28,7 @@ public class BlockGenerator : MonoBehaviour
     {
         public SegmentFlag[] Flags;
         public Color Color;
+        public GameObject SegmentObject;
 
         public Segment(SegmentFlag[] flags, Color color)
         {
@@ -41,9 +40,20 @@ public class BlockGenerator : MonoBehaviour
     public class Block
     {
         public List<Segment> Segments = new List<Segment>();
+        public GameObject BlockObject;
     }
 
-    public Color[] allColors = { Color.red, Color.blue, Color.yellow, Color.green };
+    public void SpawnNewBlock()
+    {
+        // Generate a new block
+        currentBlockData = GenerateBlock(gridManager);
+
+        // Instantiate the block visually
+        currentBlockObject = InstantiateBlock(currentBlockData);
+
+        // Position the block above the grid and allow it to follow the mouse
+        currentBlockObject.transform.position = new Vector3(0, gridManager.GetGridTopY() + 1, 0);
+    }
 
     public Block GenerateBlock(GridManager gridManager)
     {
@@ -81,13 +91,11 @@ public class BlockGenerator : MonoBehaviour
         bool isHorizontal = Random.value > 0.5f; // Horizontal or vertical split
         if (isHorizontal)
         {
-            Debug.Log("Horizontal");
             block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
             block.Segments.Add(new Segment(new[] { SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
         }
         else
         {
-            Debug.Log("Vertical");
             block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
             block.Segments.Add(new Segment(new[] { SegmentFlag.TopRight, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
         }
@@ -144,29 +152,20 @@ public class BlockGenerator : MonoBehaviour
         return chosenColor;
     }
 
-    void InstantiateBlock(Block block)
+    public GameObject InstantiateBlock(Block block)
     {
         GameObject blockObject = new GameObject("Block");
+        block.BlockObject = blockObject;
         if (blockParent != null)
         {
             blockObject.transform.SetParent(blockParent);
         }
-        
 
         foreach (var segment in block.Segments)
         {
             GameObject segmentObject = Instantiate(segmentPrefab, blockObject.transform);
+            segment.SegmentObject = segmentObject;
             segmentObject.name = "Segment";
-
-            // Add the SegmentDebug component
-            SegmentDebug segmentDebug = segmentObject.GetComponent<SegmentDebug>();
-            if (segmentDebug == null)
-            {
-                segmentDebug = segmentObject.AddComponent<SegmentDebug>();
-            }
-
-            // Initialize the debug properties
-            segmentDebug.Initialize(segment.Flags, segment.Color);
 
             // Position the segment based on its flags
             Vector3 positionOffset = GetPositionOffset(segment.Flags);
@@ -175,9 +174,13 @@ public class BlockGenerator : MonoBehaviour
             // Scale the segment based on the number of flags it occupies
             Vector3 segmentScale = GetScaleForFlags(segment.Flags);
             segmentObject.transform.localScale = segmentScale;
-        }
-    }
 
+            // Apply the segment's color
+            segmentObject.GetComponent<SpriteRenderer>().color = segment.Color;
+        }
+
+        return blockObject;
+    }
 
     Vector3 GetPositionOffset(SegmentFlag[] flags)
     {
@@ -187,16 +190,16 @@ public class BlockGenerator : MonoBehaviour
             switch (flag)
             {
                 case SegmentFlag.TopLeft:
-                    offset += new Vector3(-0.25f, 0.25f,0f );
+                    offset += new Vector3(-0.25f, 0.25f, 0f);
                     break;
                 case SegmentFlag.TopRight:
-                    offset += new Vector3(0.25f, 0.25f ,0f );
+                    offset += new Vector3(0.25f, 0.25f, 0f);
                     break;
                 case SegmentFlag.BottomLeft:
-                    offset += new Vector3(-0.25f, -0.25f,0f );
+                    offset += new Vector3(-0.25f, -0.25f, 0f);
                     break;
                 case SegmentFlag.BottomRight:
-                    offset += new Vector3(0.25f, -0.25f,0f );
+                    offset += new Vector3(0.25f, -0.25f, 0f);
                     break;
             }
         }
@@ -238,5 +241,6 @@ public class BlockGenerator : MonoBehaviour
 
         return new Vector3(scaleX, scaleY, 1f); // Keep Y scale at 1 for now
     }
+    
 
 }

@@ -1,36 +1,47 @@
 using UnityEngine;
-using System;
 
 public class GridManager : MonoBehaviour
 {
-    public int logicalGridSize = 5; // Logical grid size
-    public BlockGenerator.Block[,] logicalGrid;    // Holds colors of small cubes
-    public float cellSize = 0.25f;  // Each small cube's size in Unity units
-    public Transform gridParent;   // Parent for visual grid cells
-    public GameObject cellPrefab;  // Prefab for visual cells (optional, for debugging)
+    public int logicalGridSize = 5; // 5x5 grid
+    public int cellSize = 1;        // Size of each cell
+    public Transform gridParent;   // Parent object for visual grid
+    public GameObject gridCellPrefab; // Prefab for visual grid cells
+
+    public BlockGenerator.Block[,] logicalGrid; // Tracks the state of each cell (null if empty)
 
     void Start()
     {
         InitializeGrid();
-        CreateVisualGrid();
+        DrawGrid();
     }
 
     void InitializeGrid()
     {
+        // Initialize logical grid with empty cells
         logicalGrid = new BlockGenerator.Block[logicalGridSize, logicalGridSize];
     }
 
-    void CreateVisualGrid()
+    void DrawGrid()
     {
-        for (int row = 0; row < logicalGridSize; row++)
+        // Draw a visual representation of the grid
+        for (int x = 0; x < logicalGridSize; x++)
         {
-            for (int col = 0; col < logicalGridSize; col++)
+            for (int y = 0; y < logicalGridSize; y++)
             {
-                Vector3 position = new Vector3(col, -row, 0); // Adjust based on origin
-                Instantiate(cellPrefab, position, Quaternion.identity, gridParent);
+                Vector3 cellPosition = new Vector3(x * cellSize, -y * cellSize, 0);
+                Instantiate(gridCellPrefab, cellPosition, Quaternion.identity, gridParent);
             }
         }
     }
-    
-    
+
+    public bool IsCellEmpty(int row, int column)
+    {
+        return logicalGrid[row, column] == null;
+    }
+    public float GetGridTopY()
+    {
+        // Calculate the top Y position of the grid
+        return gridParent.position.y; // Grid's top Y is the parent transform's Y position
+    }
+
 }

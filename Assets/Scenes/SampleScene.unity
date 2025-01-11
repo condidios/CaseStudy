@@ -214,6 +214,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &520910448
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 520910450}
+  - component: {fileID: 520910449}
+  m_Layer: 0
+  m_Name: BlockPlacementManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &520910449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520910448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd5d7ce16f60b524d8bd5c02a623b95f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1900170063}
+  blockGenerator: {fileID: 1410246469}
+  hoverHeight: 2
+--- !u!4 &520910450
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520910448}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.9922776, y: -1.8262339, z: -0.049340025}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1410246468
 GameObject:
   m_ObjectHideFlags: 0
@@ -296,9 +343,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logicalGridSize: 5
-  cellSize: 0.25
+  cellSize: 1
   gridParent: {fileID: 1900170064}
-  cellPrefab: {fileID: 5960383389370897726, guid: 901bf7ec610ae0e43856a134449f83e9, type: 3}
+  gridCellPrefab: {fileID: 5960383389370897726, guid: 901bf7ec610ae0e43856a134449f83e9, type: 3}
 --- !u!4 &1900170064
 Transform:
   m_ObjectHideFlags: 0
@@ -321,3 +368,4 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 1900170064}
   - {fileID: 1410246470}
+  - {fileID: 520910450}
