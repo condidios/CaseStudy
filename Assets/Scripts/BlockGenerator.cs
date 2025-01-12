@@ -1,20 +1,18 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class BlockGenerator : MonoBehaviour
 {
-    public GameObject segmentPrefab; // Assign a basic prefab for segments in the inspector
-    public Transform blockParent;   // Assign a parent transform for better hierarchy organization
+    public GameObject segmentPrefab;
+    public Transform blockParent;
     public GridManager gridManager;
 
     public Color[] allColors = { Color.red, Color.blue, Color.yellow, Color.green };
 
-    private GameObject currentBlockObject; // The block currently being moved
-    private Block currentBlockData;        // Data representation of the current block
+    private GameObject currentBlockObject;
+    private Block currentBlockData;
 
     public enum SegmentFlag
     {
@@ -26,11 +24,11 @@ public class BlockGenerator : MonoBehaviour
 
     public class Segment
     {
-        public SegmentFlag[] Flags;
+        public List<SegmentFlag> Flags;
         public Color Color;
         public GameObject SegmentObject;
 
-        public Segment(SegmentFlag[] flags, Color color)
+        public Segment(List<SegmentFlag> flags, Color color)
         {
             Flags = flags;
             Color = color;
@@ -45,20 +43,16 @@ public class BlockGenerator : MonoBehaviour
 
     public void SpawnNewBlock()
     {
-        // Generate a new block
-        currentBlockData = GenerateBlock(gridManager);
+        currentBlockData = GenerateBlock();
 
-        // Instantiate the block visually
         currentBlockObject = InstantiateBlock(currentBlockData);
 
-        // Position the block above the grid and allow it to follow the mouse
         currentBlockObject.transform.position = new Vector3(0, gridManager.GetGridTopY() + 1, 0);
     }
-
-    public Block GenerateBlock(GridManager gridManager)
+    
+    public Block GenerateBlock()
     {
         Block block = new Block();
-
         int segmentCount = Random.Range(1, 5); // Randomize 1 to 4 segments
         List<Color> allowedColors = new List<Color>(allColors);
 
@@ -83,7 +77,7 @@ public class BlockGenerator : MonoBehaviour
 
     void CreateSingleSegment(Block block, List<Color> allowedColors)
     {
-        block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.TopRight, SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+        block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.TopRight, SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
     }
 
     void CreateTwoSegments(Block block, List<Color> allowedColors)
@@ -91,57 +85,57 @@ public class BlockGenerator : MonoBehaviour
         bool isHorizontal = Random.value > 0.5f; // Horizontal or vertical split
         if (isHorizontal)
         {
-            block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
-            block.Segments.Add(new Segment(new[] { SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
         }
         else
         {
-            block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
-            block.Segments.Add(new Segment(new[] { SegmentFlag.TopRight, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopRight, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
         }
     }
 
     void CreateThreeSegments(Block block, List<Color> allowedColors)
     {
-        bool isHorizontal = Random.value > 0.5f; // Horizontal or vertical split
+        bool isHorizontal = Random.value > 0.5f; 
         if (isHorizontal)
         {
-            block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
 
             bool splitBottom = Random.value > 0.5f;
             if (splitBottom)
             {
-                block.Segments.Add(new Segment(new[] { SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
-                block.Segments.Add(new Segment(new[] { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
             }
             else
             {
-                block.Segments.Add(new Segment(new[] { SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomLeft, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
             }
         }
         else
         {
-            block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft, SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
+            block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
 
             bool splitRight = Random.value > 0.5f;
             if (splitRight)
             {
-                block.Segments.Add(new Segment(new[] { SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
-                block.Segments.Add(new Segment(new[] { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
             }
             else
             {
-                block.Segments.Add(new Segment(new[] { SegmentFlag.TopRight, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+                block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopRight, SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
             }
         }
     }
 
     void CreateFourSegments(Block block, List<Color> allowedColors)
     {
-        block.Segments.Add(new Segment(new[] { SegmentFlag.TopLeft }, GetRandomColor(allowedColors)));
-        block.Segments.Add(new Segment(new[] { SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
-        block.Segments.Add(new Segment(new[] { SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
-        block.Segments.Add(new Segment(new[] { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
+        block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft }, GetRandomColor(allowedColors)));
+        block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopRight }, GetRandomColor(allowedColors)));
+        block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomLeft }, GetRandomColor(allowedColors)));
+        block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.BottomRight }, GetRandomColor(allowedColors)));
     }
 
     Color GetRandomColor(List<Color> allowedColors)
@@ -167,22 +161,22 @@ public class BlockGenerator : MonoBehaviour
             segment.SegmentObject = segmentObject;
             segmentObject.name = "Segment";
 
-            // Position the segment based on its flags
             Vector3 positionOffset = GetPositionOffset(segment.Flags);
             segmentObject.transform.localPosition = positionOffset;
 
-            // Scale the segment based on the number of flags it occupies
             Vector3 segmentScale = GetScaleForFlags(segment.Flags);
             segmentObject.transform.localScale = segmentScale;
 
-            // Apply the segment's color
             segmentObject.GetComponent<SpriteRenderer>().color = segment.Color;
+            
+            SegmentDebug debugComponent = segmentObject.AddComponent<SegmentDebug>();
+            debugComponent.Initialize(segment.Flags, segment.Color);
         }
 
         return blockObject;
     }
 
-    Vector3 GetPositionOffset(SegmentFlag[] flags)
+    Vector3 GetPositionOffset(List<SegmentFlag> flags)
     {
         Vector3 offset = Vector3.zero;
         foreach (var flag in flags)
@@ -203,44 +197,39 @@ public class BlockGenerator : MonoBehaviour
                     break;
             }
         }
-
-        return offset / flags.Length; // Average the positions for the center
+        return offset / flags.Count;
     }
 
-    Vector3 GetScaleForFlags(SegmentFlag[] flags)
+    Vector3 GetScaleForFlags(List<SegmentFlag> flags)
     {
         float scaleX = 1f;
         float scaleY = 1f;
 
-        // Adjust scale based on flags
-        if (flags.Length == 1)
+        if (flags.Count == 1)
         {
             scaleX = 0.5f;
             scaleY = 0.5f;
         }
-        else if (flags.Length == 2)
+        else if (flags.Count == 2)
         {
             if (flags.Contains(SegmentFlag.TopLeft) && flags.Contains(SegmentFlag.TopRight) ||
                 flags.Contains(SegmentFlag.BottomLeft) && flags.Contains(SegmentFlag.BottomRight))
             {
-                scaleX = 1f; // Horizontal stretch
-                scaleY = 0.5f; // Vertical narrow
+                scaleX = 1f; 
+                scaleY = 0.5f; 
             }
             else if (flags.Contains(SegmentFlag.TopLeft) && flags.Contains(SegmentFlag.BottomLeft) ||
                      flags.Contains(SegmentFlag.TopRight) && flags.Contains(SegmentFlag.BottomRight))
             {
-                scaleX = 0.5f; // Horizontal narrow
-                scaleY = 1f; // Vertical stretch
+                scaleX = 0.5f; 
+                scaleY = 1f; 
             }
         }
-        else if (flags.Length == 4)
+        else if (flags.Count == 4)
         {
             scaleX = 1f;
-            scaleY = 1f; // Full block size
+            scaleY = 1f; 
         }
-
-        return new Vector3(scaleX, scaleY, 1f); // Keep Y scale at 1 for now
+        return new Vector3(scaleX, scaleY, 1f); 
     }
-    
-
 }

@@ -2,12 +2,12 @@ using UnityEngine;
 
 public class BlockPlacementManager : MonoBehaviour
 {
-    public GridManager gridManager;        // Reference to the grid manager
-    public BlockGenerator blockGenerator; // Reference to the block generator
-    public float hoverHeight = 2f;        // Height at which the block hovers above the grid
+    public GridManager gridManager;
+    public BlockGenerator blockGenerator;
+    public float hoverHeight = 2f;
     public PoppingSystem poppingSystem;
-    private BlockGenerator.Block currentBlock; // The currently active block
-    private GameObject currentBlockObject;     // GameObject of the current block
+    private BlockGenerator.Block currentBlock;
+    private GameObject currentBlockObject;
 
     private Camera mainCamera;
 
@@ -23,55 +23,45 @@ public class BlockPlacementManager : MonoBehaviour
         HandleBlockPlacement();
     }
 
-    // ReSharper disable Unity.PerformanceAnalysis
     void SpawnNewBlock()
     {
-        // Generate a new block and its visual representation
-        currentBlock = blockGenerator.GenerateBlock(gridManager);
+        currentBlock = blockGenerator.GenerateBlock();
         currentBlockObject = blockGenerator.InstantiateBlock(currentBlock);
-        currentBlockObject.transform.position = new Vector3(0, hoverHeight, 0); // Start above the grid
+        currentBlockObject.transform.position = new Vector3(0, hoverHeight, 0);
     }
 
     void HandleBlockHovering()
     {
         if (currentBlockObject == null) return;
 
-        // Convert mouse X position to world position
         Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPosition.z = 0;
 
-        // Clamp mouse position to grid's X range
         float clampedX = Mathf.Clamp(mouseWorldPosition.x, 0, gridManager.logicalGridSize - 1);
         currentBlockObject.transform.position = new Vector3(clampedX, hoverHeight, 0);
     }
 
     void HandleBlockPlacement()
     {
-        if (Input.GetMouseButtonDown(0)) // Detect left-click
+        if (Input.GetMouseButtonDown(0))
         {
-            // Determine the column based on mouse X position
             Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             int column = Mathf.RoundToInt(mouseWorldPosition.x);
 
-            // Ensure column is within grid bounds
             column = Mathf.Clamp(column, 0, gridManager.logicalGridSize - 1);
 
-            // Find the lowest empty cell in the column
             int row = FindLowestEmptyRowInColumn(column);
 
-            if (row >= 0) // If there's space in the column
+            if (row >= 0) 
             {
-                // Place the block in the grid
                 gridManager.logicalGrid[row, column] = currentBlock;
                 Vector3 dropPosition = new Vector3(column, -row, 0);
                 currentBlockObject.transform.position = dropPosition;
                 
                 poppingSystem.CheckAndPopSegments(currentBlock,row, column);
-
-                // Clear reference to the current block
+                
                 currentBlockObject = null;
-
-                // Spawn a new block for the next round
+                
                 SpawnNewBlock();
             }
             else
@@ -80,7 +70,6 @@ public class BlockPlacementManager : MonoBehaviour
             }
         }
     }
-
     int FindLowestEmptyRowInColumn(int column)
     {
         for (int row = gridManager.logicalGridSize - 1; row >= 0; row--)
@@ -90,6 +79,6 @@ public class BlockPlacementManager : MonoBehaviour
                 return row;
             }
         }
-        return -1; // Column is full
+        return -1; 
     }
 }

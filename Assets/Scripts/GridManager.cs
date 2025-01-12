@@ -2,12 +2,12 @@ using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
-    public int logicalGridSize = 5; // 5x5 grid
-    public int cellSize = 1;        // Size of each cell
-    public Transform gridParent;   // Parent object for visual grid
-    public GameObject gridCellPrefab; // Prefab for visual grid cells
+    public int logicalGridSize = 5;
+    public int cellSize = 1;
+    public Transform gridParent;
+    public GameObject gridCellPrefab;
 
-    public BlockGenerator.Block[,] logicalGrid; // Tracks the state of each cell (null if empty)
+    public BlockGenerator.Block[,] logicalGrid;
 
     void Start()
     {
@@ -17,13 +17,11 @@ public class GridManager : MonoBehaviour
 
     void InitializeGrid()
     {
-        // Initialize logical grid with empty cells
         logicalGrid = new BlockGenerator.Block[logicalGridSize, logicalGridSize];
     }
 
     void DrawGrid()
     {
-        // Draw a visual representation of the grid
         for (int x = 0; x < logicalGridSize; x++)
         {
             for (int y = 0; y < logicalGridSize; y++)
@@ -40,8 +38,38 @@ public class GridManager : MonoBehaviour
     }
     public float GetGridTopY()
     {
-        // Calculate the top Y position of the grid
-        return gridParent.position.y; // Grid's top Y is the parent transform's Y position
+        return gridParent.position.y;
+    }
+    public void UpdateGridAfterRemoval(int column)
+    {
+        for (int row = logicalGridSize - 2; row >= 0; row--)
+        {
+            if (logicalGrid[row, column] != null)
+            {
+                int newRow = FindLowestEmptyRow(column, row);
+                if (newRow != row)
+                {
+                    var block = logicalGrid[row, column];
+                    logicalGrid[newRow, column] = block;
+                    logicalGrid[row, column] = null;
+
+                    Vector3 newPosition = new Vector3(column * cellSize, -newRow * cellSize, 0);
+                    block.BlockObject.transform.position = newPosition;
+                }
+            }
+        }
+    }
+
+    private int FindLowestEmptyRow(int column, int startRow)
+    {
+        for (int row = logicalGridSize - 1; row > startRow; row--)
+        {
+            if (logicalGrid[row, column] == null)
+            {
+                return row;
+            }
+        }
+        return startRow;
     }
 
 }

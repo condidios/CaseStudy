@@ -1,16 +1,14 @@
-﻿using System;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class SegmentDebug : MonoBehaviour
 {
     [Header("Segment Properties")]
-    public BlockGenerator.SegmentFlag[] Flags;
+    public List<BlockGenerator.SegmentFlag> Flags;
     public Color SegmentColor;
 
     private void OnValidate()
     {
-        // Automatically update the renderer's color in the editor
         Renderer renderer = GetComponent<Renderer>();
         if (renderer != null)
         {
@@ -18,12 +16,11 @@ public class SegmentDebug : MonoBehaviour
         }
     }
 
-    public void Initialize(BlockGenerator.SegmentFlag[] flags, Color color)
+    public void Initialize(List<BlockGenerator.SegmentFlag> flags, Color color)
     {
         Flags = flags;
         SegmentColor = color;
 
-        // Update renderer's color when initialized
         Renderer renderer = GetComponent<Renderer>();
         if (renderer != null)
         {

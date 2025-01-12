@@ -9,11 +9,9 @@ public class PoppingSystem : MonoBehaviour
     public void CheckAndPopSegments(BlockGenerator.Block block, int row, int column)
     {
         if (block == null) return;
-
-        // List to collect segments for popping
         List<BlockGenerator.Segment> segmentsToPop = new List<BlockGenerator.Segment>();
-
-        // Iterate through each segment of the block
+        List<BlockGenerator.Block> blocksToCheckForRemoval = new List<BlockGenerator.Block>();
+        
         foreach (var segment in block.Segments)
         {
             foreach (var flag in segment.Flags)
@@ -21,45 +19,42 @@ public class PoppingSystem : MonoBehaviour
                 switch (flag)
                 {
                     case BlockGenerator.SegmentFlag.TopLeft:
-                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop); // Check left block's top-right
+                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop,blocksToCheckForRemoval);
                         break;
 
                     case BlockGenerator.SegmentFlag.BottomLeft:
-                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.BottomRight, segment, segmentsToPop); // Check left block's bottom-right
-                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop); // Check bottom block's top-left
+                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.BottomRight, segment, segmentsToPop,blocksToCheckForRemoval); 
+                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
                         break;
 
                     case BlockGenerator.SegmentFlag.TopRight:
-                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop); // Check right block's top-left
+                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
                         break;
 
                     case BlockGenerator.SegmentFlag.BottomRight:
-                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.BottomLeft, segment, segmentsToPop); // Check right block's bottom-left
-                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop); // Check bottom block's top-right
+                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.BottomLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
+                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop,blocksToCheckForRemoval); 
                         break;
                 }
             }
         }
-
-        // Pop the collected segments
-        PopSegments(block, segmentsToPop);
+        PopSegments(block, segmentsToPop,blocksToCheckForRemoval);
     }
 
-    private void CheckAdjacentSegment(int row, int column, BlockGenerator.SegmentFlag requiredFlag, BlockGenerator.Segment currentSegment, List<BlockGenerator.Segment> segmentsToPop)
+    private void CheckAdjacentSegment(int row, int column, BlockGenerator.SegmentFlag requiredFlag, BlockGenerator.Segment currentSegment, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheck)
     {
-        // Validate grid bounds
         if (row < 0 || column < 0 || row >= gridManager.logicalGridSize || column >= gridManager.logicalGridSize) return;
-
-        // Get the adjacent block
         var adjacentBlock = gridManager.logicalGrid[row, column];
         if (adjacentBlock == null) return;
 
-        // Check segments of the adjacent block
         foreach (var adjacentSegment in adjacentBlock.Segments)
         {
             if (adjacentSegment.Flags.Contains(requiredFlag) && adjacentSegment.Color == currentSegment.Color)
             {
-                // Add to pop list if not already present
+                if (!blocksToCheck.Contains(adjacentBlock))
+                {
+                    blocksToCheck.Add(adjacentBlock);
+                }
                 if (!segmentsToPop.Contains(adjacentSegment))
                 {
                     segmentsToPop.Add(adjacentSegment);
@@ -72,40 +67,119 @@ public class PoppingSystem : MonoBehaviour
         }
     }
 
-    private void PopSegments(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop)
+    private void PopSegments(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheckForRemoval)
     {
         foreach (var segment in segmentsToPop)
         {
-            // Optionally, visually destroy or deactivate the segment
             Destroy(segment.SegmentObject);
-
-            // Remove segment from the block's segment list
+            foreach (var blockToCheck in blocksToCheckForRemoval)
+            {
+                blockToCheck.Segments.Remove(segment);
+            }
             block.Segments.Remove(segment);
         }
 
-        // If the block has no remaining segments, clear it from the grid
+        foreach (var blockToCheck in blocksToCheckForRemoval)
+        {
+            if (blockToCheck.Segments.Count == 0)
+            {
+                RemoveBlockFromGrid(blockToCheck);
+            }
+        }
+
         if (block.Segments.Count == 0)
         {
             RemoveBlockFromGrid(block);
+        }
+        else
+        {
+            ExpandBlock(block); 
         }
     }
 
     private void RemoveBlockFromGrid(BlockGenerator.Block block)
     {
-        // Find the block's position in the grid
+        int removedRow = -1;
+        int removedColumn = -1;
+
         for (int row = 0; row < gridManager.logicalGridSize; row++)
         {
             for (int column = 0; column < gridManager.logicalGridSize; column++)
             {
                 if (gridManager.logicalGrid[row, column] == block)
                 {
-                    // Clear the block from the grid
                     gridManager.logicalGrid[row, column] = null;
+                    removedRow = row;
+                    removedColumn = column;
                     break;
                 }
             }
         }
-        // Optionally, destroy the block GameObject
+
         Destroy(block.BlockObject);
+
+        if (removedRow != -1 && removedColumn != -1)
+        {
+            gridManager.UpdateGridAfterRemoval(removedColumn);
+        }
     }
+    private void ExpandBlock(BlockGenerator.Block block)
+    {
+        var expansionMap = new Dictionary<BlockGenerator.SegmentFlag, BlockGenerator.SegmentFlag[]>
+        {
+            { BlockGenerator.SegmentFlag.TopLeft, new[] { BlockGenerator.SegmentFlag.BottomLeft, BlockGenerator.SegmentFlag.TopRight } },
+            { BlockGenerator.SegmentFlag.TopRight, new[] { BlockGenerator.SegmentFlag.BottomRight, BlockGenerator.SegmentFlag.TopLeft } },
+            { BlockGenerator.SegmentFlag.BottomLeft, new[] { BlockGenerator.SegmentFlag.TopLeft, BlockGenerator.SegmentFlag.BottomRight } },
+            { BlockGenerator.SegmentFlag.BottomRight, new[] { BlockGenerator.SegmentFlag.TopRight, BlockGenerator.SegmentFlag.BottomLeft } }
+        };
+
+        // Determine missing flags in the block
+        var allFlags = new HashSet<BlockGenerator.SegmentFlag> 
+        { 
+            BlockGenerator.SegmentFlag.TopLeft, BlockGenerator.SegmentFlag.TopRight, 
+            BlockGenerator.SegmentFlag.BottomLeft, BlockGenerator.SegmentFlag.BottomRight 
+        };
+        var existingFlags = block.Segments.SelectMany(segment => segment.Flags).ToHashSet();
+        var missingFlags = allFlags.Except(existingFlags).ToList();
+
+        foreach (var missingFlag in missingFlags)
+        {
+            foreach (var segment in block.Segments)
+            {
+                if (segment.Flags.Any(flag => expansionMap[missingFlag].Contains(flag)))
+                {
+                    segment.Flags.Add(missingFlag);
+
+                    UpdateSegmentVisual(segment, missingFlag);
+                    break;
+                }
+            }
+        }
+    }
+    private void UpdateSegmentVisual(BlockGenerator.Segment segment, BlockGenerator.SegmentFlag newFlag)
+    {
+        var segmentObject = segment.SegmentObject;
+        var renderer = segmentObject.GetComponent<Renderer>();
+        var originalSize = renderer.bounds.size;
+
+        switch (newFlag)
+        {
+            case BlockGenerator.SegmentFlag.TopLeft:
+                segmentObject.transform.localPosition += new Vector3(-originalSize.x / 2, originalSize.y / 2, 0);
+                break;
+            case BlockGenerator.SegmentFlag.TopRight:
+                segmentObject.transform.localPosition += new Vector3(originalSize.x / 2, originalSize.y / 2, 0);
+                break;
+            case BlockGenerator.SegmentFlag.BottomLeft:
+                segmentObject.transform.localPosition += new Vector3(-originalSize.x / 2, -originalSize.y / 2, 0);
+                break;
+            case BlockGenerator.SegmentFlag.BottomRight:
+                segmentObject.transform.localPosition += new Vector3(originalSize.x / 2, -originalSize.y / 2, 0);
+                break;
+        }
+        
+        renderer.transform.localScale *= 1.1f; 
+    }
+
+
 }
