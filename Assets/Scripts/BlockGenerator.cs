@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -53,7 +52,7 @@ public class BlockGenerator : MonoBehaviour
     public Block GenerateBlock()
     {
         Block block = new Block();
-        int segmentCount = Random.Range(1, 5); // Randomize 1 to 4 segments
+        int segmentCount = Random.Range(1, 5);
         List<Color> allowedColors = new List<Color>(allColors);
 
         switch (segmentCount)
@@ -82,7 +81,7 @@ public class BlockGenerator : MonoBehaviour
 
     void CreateTwoSegments(Block block, List<Color> allowedColors)
     {
-        bool isHorizontal = Random.value > 0.5f; // Horizontal or vertical split
+        bool isHorizontal = Random.value > 0.5f;
         if (isHorizontal)
         {
             block.Segments.Add(new Segment(new List<SegmentFlag>() { SegmentFlag.TopLeft, SegmentFlag.TopRight }, GetRandomColor(allowedColors)));

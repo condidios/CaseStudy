@@ -181,9 +181,6 @@ public class PoppingSystem : MonoBehaviour
         {
             UpdateSegmentVisual(segment);
         }
-
-        /*var coordinates = gridManager.GetGridPosition(block);
-        CheckAndPopSegments(block,coordinates[1],coordinates[0]);*/
     }
 
     private bool CanAddFlag(BlockGenerator.Segment segment, BlockGenerator.SegmentFlag newFlag, Dictionary<BlockGenerator.SegmentFlag, BlockGenerator.SegmentFlag[]> expansionMap)
