@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,8 +7,10 @@ public class PoppingSystem : MonoBehaviour
 {
     public GridManager gridManager;
 
-    public void CheckAndPopSegments(BlockGenerator.Block block, int row, int column)
+    public void CheckAndPopSegments(int row, int column)
     {
+        if (row < 0 || column < 0 || row >= gridManager.logicalGridSize || column >= gridManager.logicalGridSize) return;
+        var block = gridManager.logicalGrid[row, column];
         if (block == null) return;
         List<BlockGenerator.Segment> segmentsToPop = new List<BlockGenerator.Segment>();
         List<BlockGenerator.Block> blocksToCheckForRemoval = new List<BlockGenerator.Block>();
@@ -39,6 +42,13 @@ public class PoppingSystem : MonoBehaviour
             }
         }
         PopSegments(block, segmentsToPop,blocksToCheckForRemoval);
+        if (segmentsToPop.Count > 0)
+        {
+            CheckAndPopSegments(row,column-1);
+            CheckAndPopSegments(row -1, column);
+            CheckAndPopSegments(row+1,column);
+        }
+        
     }
 
     private void CheckAdjacentSegment(int row, int column, BlockGenerator.SegmentFlag requiredFlag, BlockGenerator.Segment currentSegment, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheck)
@@ -95,6 +105,13 @@ public class PoppingSystem : MonoBehaviour
         {
             ExpandBlock(block); 
         }
+        foreach (var adjacentBlock in blocksToCheckForRemoval)
+        {
+            if (adjacentBlock.Segments.Count > 0) 
+            {
+                ExpandBlock(adjacentBlock);
+            }
+        }
     }
 
     private void RemoveBlockFromGrid(BlockGenerator.Block block)
@@ -133,53 +150,95 @@ public class PoppingSystem : MonoBehaviour
             { BlockGenerator.SegmentFlag.BottomRight, new[] { BlockGenerator.SegmentFlag.TopRight, BlockGenerator.SegmentFlag.BottomLeft } }
         };
 
-        // Determine missing flags in the block
-        var allFlags = new HashSet<BlockGenerator.SegmentFlag> 
-        { 
-            BlockGenerator.SegmentFlag.TopLeft, BlockGenerator.SegmentFlag.TopRight, 
-            BlockGenerator.SegmentFlag.BottomLeft, BlockGenerator.SegmentFlag.BottomRight 
+        var allFlags = new HashSet<BlockGenerator.SegmentFlag>
+        {
+            BlockGenerator.SegmentFlag.TopLeft, BlockGenerator.SegmentFlag.TopRight,
+            BlockGenerator.SegmentFlag.BottomLeft, BlockGenerator.SegmentFlag.BottomRight
         };
+
         var existingFlags = block.Segments.SelectMany(segment => segment.Flags).ToHashSet();
         var missingFlags = allFlags.Except(existingFlags).ToList();
-
+        
         foreach (var missingFlag in missingFlags)
         {
             foreach (var segment in block.Segments)
             {
-                if (segment.Flags.Any(flag => expansionMap[missingFlag].Contains(flag)))
+                if (CanAddFlag(segment, missingFlag, expansionMap))
                 {
                     segment.Flags.Add(missingFlag);
-
-                    UpdateSegmentVisual(segment, missingFlag);
                     break;
                 }
             }
         }
-    }
-    private void UpdateSegmentVisual(BlockGenerator.Segment segment, BlockGenerator.SegmentFlag newFlag)
-    {
-        var segmentObject = segment.SegmentObject;
-        var renderer = segmentObject.GetComponent<Renderer>();
-        var originalSize = renderer.bounds.size;
 
-        switch (newFlag)
+        if (block.Segments.Count == 1)
         {
-            case BlockGenerator.SegmentFlag.TopLeft:
-                segmentObject.transform.localPosition += new Vector3(-originalSize.x / 2, originalSize.y / 2, 0);
-                break;
-            case BlockGenerator.SegmentFlag.TopRight:
-                segmentObject.transform.localPosition += new Vector3(originalSize.x / 2, originalSize.y / 2, 0);
-                break;
-            case BlockGenerator.SegmentFlag.BottomLeft:
-                segmentObject.transform.localPosition += new Vector3(-originalSize.x / 2, -originalSize.y / 2, 0);
-                break;
-            case BlockGenerator.SegmentFlag.BottomRight:
-                segmentObject.transform.localPosition += new Vector3(originalSize.x / 2, -originalSize.y / 2, 0);
-                break;
+            var remainingSegment = block.Segments.First();
+            remainingSegment.Flags = allFlags.ToList();
         }
-        
-        renderer.transform.localScale *= 1.1f; 
+
+        foreach (var segment in block.Segments)
+        {
+            UpdateSegmentVisual(segment);
+        }
+
+        /*var coordinates = gridManager.GetGridPosition(block);
+        CheckAndPopSegments(block,coordinates[1],coordinates[0]);*/
     }
+
+    private bool CanAddFlag(BlockGenerator.Segment segment, BlockGenerator.SegmentFlag newFlag, Dictionary<BlockGenerator.SegmentFlag, BlockGenerator.SegmentFlag[]> expansionMap)
+    {
+        if (segment.Flags.Count == 2 && !segment.Flags.Contains(newFlag)) return false;
+
+        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.TopLeft) && newFlag == BlockGenerator.SegmentFlag.BottomRight) return false;
+        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.BottomRight) && newFlag == BlockGenerator.SegmentFlag.TopLeft) return false;
+        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.TopRight) && newFlag == BlockGenerator.SegmentFlag.BottomLeft) return false;
+        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.BottomLeft) && newFlag == BlockGenerator.SegmentFlag.TopRight) return false;
+
+        return segment.Flags.Any(flag => expansionMap[newFlag].Contains(flag));
+    }
+
+    private void UpdateSegmentVisual(BlockGenerator.Segment segment)
+    {
+        float minX = 0, maxX = 0;
+        float minY = 0, maxY = 0;
+
+        foreach (var flag in segment.Flags)
+        {
+            switch (flag)
+            {
+                case BlockGenerator.SegmentFlag.TopLeft:
+                    minX = Math.Min(minX, -0.5f);
+                    maxY = Math.Max(maxY, 0.5f);
+                    break;
+                case BlockGenerator.SegmentFlag.TopRight:
+                    maxX = Math.Max(maxX, 0.5f);
+                    maxY = Math.Max(maxY, 0.5f);
+                    break;
+                case BlockGenerator.SegmentFlag.BottomLeft:
+                    minX = Math.Min(minX, -0.5f);
+                    minY = Math.Min(minY, -0.5f);
+                    break;
+                case BlockGenerator.SegmentFlag.BottomRight:
+                    maxX = Math.Max(maxX, 0.5f);
+                    minY = Math.Min(minY, -0.5f);
+                    break;
+            }
+        }
+
+        if (minX > maxX) maxX = minX + 0.1f; 
+        if (minY > maxY) maxY = minY + 0.1f; 
+        
+        float centerX = (minX + maxX) / 2f;
+        float centerY = (minY + maxY) / 2f;
+        float scaleX = Math.Max(maxX - minX, 0.1f); 
+        float scaleY = Math.Max(maxY - minY, 0.1f);
+
+        var segmentObject = segment.SegmentObject;
+        segmentObject.transform.localPosition = new Vector3(centerX, centerY, 0);
+        segmentObject.transform.localScale = new Vector3(scaleX, scaleY, 1);
+    }
+
 
 
 }

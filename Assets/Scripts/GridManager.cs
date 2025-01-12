@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -71,5 +72,23 @@ public class GridManager : MonoBehaviour
         }
         return startRow;
     }
+    public List<int> GetGridPosition(BlockGenerator.Block block)
+    {
+        List<int> coordinates = new List<int>();
+        for (int row = 0; row < logicalGridSize; row++)
+        {
+            for (int column = 0; column < logicalGridSize; column++)
+            {
+                if (logicalGrid[row, column] == block)
+                {
+                    coordinates.Add(row);
+                    coordinates.Add(column);
+                }
+            }
+        }
+        // Return an invalid position if the block is not found
+        return coordinates;
+    }
+
 
 }

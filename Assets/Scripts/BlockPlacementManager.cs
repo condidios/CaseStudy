@@ -58,7 +58,7 @@ public class BlockPlacementManager : MonoBehaviour
                 Vector3 dropPosition = new Vector3(column, -row, 0);
                 currentBlockObject.transform.position = dropPosition;
                 
-                poppingSystem.CheckAndPopSegments(currentBlock,row, column);
+                poppingSystem.CheckAndPopSegments(row, column);
                 
                 currentBlockObject = null;
                 
