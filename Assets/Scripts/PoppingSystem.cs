@@ -8,14 +8,23 @@ public class PoppingSystem : MonoBehaviour
 {
     public GridManager gridManager;
 
-    public void CheckAndPopSegments(int row, int column)
+    public void CheckAndPopSegments(int row, int column, HashSet<BlockGenerator.Block> visitedBlocks = null)
     {
+        if (visitedBlocks == null)
+        {
+            visitedBlocks = new HashSet<BlockGenerator.Block>();
+        }
+
         if (row < 0 || column < 0 || row >= gridManager.logicalGridSize || column >= gridManager.logicalGridSize) return;
+
         var block = gridManager.logicalGrid[row, column];
-        if (block == null) return;
+        if (block == null || visitedBlocks.Contains(block)) return;
+        
+        visitedBlocks.Add(block);
+
         List<BlockGenerator.Segment> segmentsToPop = new List<BlockGenerator.Segment>();
         List<BlockGenerator.Block> blocksToCheckForRemoval = new List<BlockGenerator.Block>();
-        
+
         foreach (var segment in block.segments)
         {
             foreach (var flag in segment.flags)
@@ -23,34 +32,36 @@ public class PoppingSystem : MonoBehaviour
                 switch (flag)
                 {
                     case BlockGenerator.SegmentFlag.TopLeft:
-                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop,blocksToCheckForRemoval);
+                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop, blocksToCheckForRemoval);
                         break;
 
                     case BlockGenerator.SegmentFlag.BottomLeft:
-                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.BottomRight, segment, segmentsToPop,blocksToCheckForRemoval); 
-                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
+                        CheckAdjacentSegment(row, column - 1, BlockGenerator.SegmentFlag.BottomRight, segment, segmentsToPop, blocksToCheckForRemoval);
+                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop, blocksToCheckForRemoval);
                         break;
 
                     case BlockGenerator.SegmentFlag.TopRight:
-                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
+                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.TopLeft, segment, segmentsToPop, blocksToCheckForRemoval);
                         break;
 
                     case BlockGenerator.SegmentFlag.BottomRight:
-                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.BottomLeft, segment, segmentsToPop,blocksToCheckForRemoval); 
-                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop,blocksToCheckForRemoval); 
+                        CheckAdjacentSegment(row, column + 1, BlockGenerator.SegmentFlag.BottomLeft, segment, segmentsToPop, blocksToCheckForRemoval);
+                        CheckAdjacentSegment(row + 1, column, BlockGenerator.SegmentFlag.TopRight, segment, segmentsToPop, blocksToCheckForRemoval);
                         break;
                 }
             }
         }
-        PopSegments(block, segmentsToPop,blocksToCheckForRemoval);
+
         if (segmentsToPop.Count > 0)
         {
-            CheckAndPopSegments(row,column-1);
-            CheckAndPopSegments(row -1, column);
-            CheckAndPopSegments(row+1,column);
+            PopSegments(block, segmentsToPop, blocksToCheckForRemoval);
+            
+            CheckAndPopSegments(row, column - 1, visitedBlocks);
+            CheckAndPopSegments(row - 1, column, visitedBlocks);
+            CheckAndPopSegments(row + 1, column, visitedBlocks);
         }
-        
     }
+
 
     private void CheckAdjacentSegment(int row, int column, BlockGenerator.SegmentFlag requiredFlag, BlockGenerator.Segment currentSegment, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheck)
     {
