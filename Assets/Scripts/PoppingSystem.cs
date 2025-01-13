@@ -15,9 +15,9 @@ public class PoppingSystem : MonoBehaviour
         List<BlockGenerator.Segment> segmentsToPop = new List<BlockGenerator.Segment>();
         List<BlockGenerator.Block> blocksToCheckForRemoval = new List<BlockGenerator.Block>();
         
-        foreach (var segment in block.Segments)
+        foreach (var segment in block.segments)
         {
-            foreach (var flag in segment.Flags)
+            foreach (var flag in segment.flags)
             {
                 switch (flag)
                 {
@@ -57,9 +57,9 @@ public class PoppingSystem : MonoBehaviour
         var adjacentBlock = gridManager.logicalGrid[row, column];
         if (adjacentBlock == null) return;
 
-        foreach (var adjacentSegment in adjacentBlock.Segments)
+        foreach (var adjacentSegment in adjacentBlock.segments)
         {
-            if (adjacentSegment.Flags.Contains(requiredFlag) && adjacentSegment.Color == currentSegment.Color)
+            if (adjacentSegment.flags.Contains(requiredFlag) && adjacentSegment.color == currentSegment.color)
             {
                 if (!blocksToCheck.Contains(adjacentBlock))
                 {
@@ -79,25 +79,26 @@ public class PoppingSystem : MonoBehaviour
 
     private void PopSegments(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheckForRemoval)
     {
+        FindObjectOfType<GameManager>().OnSegmentPopped(segmentsToPop.Count);
         foreach (var segment in segmentsToPop)
         {
-            Destroy(segment.SegmentObject);
+            Destroy(segment.segmentObject);
             foreach (var blockToCheck in blocksToCheckForRemoval)
             {
-                blockToCheck.Segments.Remove(segment);
+                blockToCheck.segments.Remove(segment);
             }
-            block.Segments.Remove(segment);
+            block.segments.Remove(segment);
         }
 
         foreach (var blockToCheck in blocksToCheckForRemoval)
         {
-            if (blockToCheck.Segments.Count == 0)
+            if (blockToCheck.segments.Count == 0)
             {
                 RemoveBlockFromGrid(blockToCheck);
             }
         }
 
-        if (block.Segments.Count == 0)
+        if (block.segments.Count == 0)
         {
             RemoveBlockFromGrid(block);
         }
@@ -107,7 +108,7 @@ public class PoppingSystem : MonoBehaviour
         }
         foreach (var adjacentBlock in blocksToCheckForRemoval)
         {
-            if (adjacentBlock.Segments.Count > 0) 
+            if (adjacentBlock.segments.Count > 0) 
             {
                 ExpandBlock(adjacentBlock);
             }
@@ -133,7 +134,7 @@ public class PoppingSystem : MonoBehaviour
             }
         }
 
-        Destroy(block.BlockObject);
+        Destroy(block.blockObject);
 
         if (removedRow != -1 && removedColumn != -1)
         {
@@ -156,28 +157,28 @@ public class PoppingSystem : MonoBehaviour
             BlockGenerator.SegmentFlag.BottomLeft, BlockGenerator.SegmentFlag.BottomRight
         };
 
-        var existingFlags = block.Segments.SelectMany(segment => segment.Flags).ToHashSet();
+        var existingFlags = block.segments.SelectMany(segment => segment.flags).ToHashSet();
         var missingFlags = allFlags.Except(existingFlags).ToList();
         
         foreach (var missingFlag in missingFlags)
         {
-            foreach (var segment in block.Segments)
+            foreach (var segment in block.segments)
             {
                 if (CanAddFlag(segment, missingFlag, expansionMap))
                 {
-                    segment.Flags.Add(missingFlag);
+                    segment.flags.Add(missingFlag);
                     break;
                 }
             }
         }
 
-        if (block.Segments.Count == 1)
+        if (block.segments.Count == 1)
         {
-            var remainingSegment = block.Segments.First();
-            remainingSegment.Flags = allFlags.ToList();
+            var remainingSegment = block.segments.First();
+            remainingSegment.flags = allFlags.ToList();
         }
 
-        foreach (var segment in block.Segments)
+        foreach (var segment in block.segments)
         {
             UpdateSegmentVisual(segment);
         }
@@ -185,14 +186,14 @@ public class PoppingSystem : MonoBehaviour
 
     private bool CanAddFlag(BlockGenerator.Segment segment, BlockGenerator.SegmentFlag newFlag, Dictionary<BlockGenerator.SegmentFlag, BlockGenerator.SegmentFlag[]> expansionMap)
     {
-        if (segment.Flags.Count == 2 && !segment.Flags.Contains(newFlag)) return false;
+        if (segment.flags.Count == 2 && !segment.flags.Contains(newFlag)) return false;
 
-        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.TopLeft) && newFlag == BlockGenerator.SegmentFlag.BottomRight) return false;
-        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.BottomRight) && newFlag == BlockGenerator.SegmentFlag.TopLeft) return false;
-        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.TopRight) && newFlag == BlockGenerator.SegmentFlag.BottomLeft) return false;
-        if (segment.Flags.Contains(BlockGenerator.SegmentFlag.BottomLeft) && newFlag == BlockGenerator.SegmentFlag.TopRight) return false;
+        if (segment.flags.Contains(BlockGenerator.SegmentFlag.TopLeft) && newFlag == BlockGenerator.SegmentFlag.BottomRight) return false;
+        if (segment.flags.Contains(BlockGenerator.SegmentFlag.BottomRight) && newFlag == BlockGenerator.SegmentFlag.TopLeft) return false;
+        if (segment.flags.Contains(BlockGenerator.SegmentFlag.TopRight) && newFlag == BlockGenerator.SegmentFlag.BottomLeft) return false;
+        if (segment.flags.Contains(BlockGenerator.SegmentFlag.BottomLeft) && newFlag == BlockGenerator.SegmentFlag.TopRight) return false;
 
-        return segment.Flags.Any(flag => expansionMap[newFlag].Contains(flag));
+        return segment.flags.Any(flag => expansionMap[newFlag].Contains(flag));
     }
 
     private void UpdateSegmentVisual(BlockGenerator.Segment segment)
@@ -200,7 +201,7 @@ public class PoppingSystem : MonoBehaviour
         float minX = 0, maxX = 0;
         float minY = 0, maxY = 0;
 
-        foreach (var flag in segment.Flags)
+        foreach (var flag in segment.flags)
         {
             switch (flag)
             {
@@ -231,7 +232,7 @@ public class PoppingSystem : MonoBehaviour
         float scaleX = Math.Max(maxX - minX, 0.1f); 
         float scaleY = Math.Max(maxY - minY, 0.1f);
 
-        var segmentObject = segment.SegmentObject;
+        var segmentObject = segment.segmentObject;
         segmentObject.transform.localPosition = new Vector3(centerX, centerY, 0);
         segmentObject.transform.localScale = new Vector3(scaleX, scaleY, 1);
     }

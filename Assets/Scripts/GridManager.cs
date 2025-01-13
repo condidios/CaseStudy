@@ -49,7 +49,7 @@ public class GridManager : MonoBehaviour
                     logicalGrid[row, column] = null;
 
                     Vector3 newPosition = new Vector3(column * cellSize, -newRow * cellSize, 0);
-                    block.BlockObject.transform.position = newPosition;
+                    block.blockObject.transform.position = newPosition;
                 }
             }
         }
@@ -65,5 +65,9 @@ public class GridManager : MonoBehaviour
             }
         }
         return startRow;
+    }
+    public bool IsGridReady()
+    {
+        return logicalGrid != null && logicalGrid.Length > 0;
     }
 }

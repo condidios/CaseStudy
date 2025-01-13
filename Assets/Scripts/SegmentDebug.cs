@@ -1,30 +1,31 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class SegmentDebug : MonoBehaviour
 {
-    [Header("Segment Properties")]
-    public List<BlockGenerator.SegmentFlag> Flags;
-    public Color SegmentColor;
+    [FormerlySerializedAs("Flags")] [Header("Segment Properties")]
+    public List<BlockGenerator.SegmentFlag> flags;
+    [FormerlySerializedAs("SegmentColor")] public Color segmentColor;
 
     private void OnValidate()
     {
-        Renderer renderer = GetComponent<Renderer>();
-        if (renderer != null)
+        Renderer component = GetComponent<Renderer>();
+        if (component != null)
         {
-            renderer.material.color = SegmentColor;
+            component.material.color = segmentColor;
         }
     }
 
-    public void Initialize(List<BlockGenerator.SegmentFlag> flags, Color color)
+    public void Initialize(List<BlockGenerator.SegmentFlag> colorFlags, Color color)
     {
-        Flags = flags;
-        SegmentColor = color;
+        this.flags = colorFlags;
+        segmentColor = color;
 
-        Renderer renderer = GetComponent<Renderer>();
-        if (renderer != null)
+        Renderer component = GetComponent<Renderer>();
+        if (component != null)
         {
-            renderer.material.color = SegmentColor;
+            component.material.color = segmentColor;
         }
     }
 }

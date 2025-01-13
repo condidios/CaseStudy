@@ -6,14 +6,14 @@ public class BlockPlacementManager : MonoBehaviour
     public BlockGenerator blockGenerator;
     public float hoverHeight = 2f;
     public PoppingSystem poppingSystem;
-    private BlockGenerator.Block currentBlock;
-    private GameObject currentBlockObject;
+    private BlockGenerator.Block _currentBlock;
+    private GameObject _currentBlockObject;
 
-    private Camera mainCamera;
+    private Camera _mainCamera;
 
     void Start()
     {
-        mainCamera = Camera.main;
+        _mainCamera = Camera.main;
         SpawnNewBlock();
     }
 
@@ -25,27 +25,27 @@ public class BlockPlacementManager : MonoBehaviour
 
     void SpawnNewBlock()
     {
-        currentBlock = blockGenerator.GenerateBlock();
-        currentBlockObject = blockGenerator.InstantiateBlock(currentBlock);
-        currentBlockObject.transform.position = new Vector3(0, hoverHeight, 0);
+        _currentBlock = blockGenerator.GenerateBlock();
+        _currentBlockObject = blockGenerator.InstantiateBlock(_currentBlock);
+        _currentBlockObject.transform.position = new Vector3(0, hoverHeight, 0);
     }
 
     void HandleBlockHovering()
     {
-        if (currentBlockObject == null) return;
+        if (_currentBlockObject == null) return;
 
-        Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mouseWorldPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPosition.z = 0;
 
         float clampedX = Mathf.Clamp(mouseWorldPosition.x, 0, gridManager.logicalGridSize - 1);
-        currentBlockObject.transform.position = new Vector3(clampedX, hoverHeight, 0);
+        _currentBlockObject.transform.position = new Vector3(clampedX, hoverHeight, 0);
     }
 
     void HandleBlockPlacement()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 mouseWorldPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
             int column = Mathf.RoundToInt(mouseWorldPosition.x);
 
             column = Mathf.Clamp(column, 0, gridManager.logicalGridSize - 1);
@@ -54,15 +54,17 @@ public class BlockPlacementManager : MonoBehaviour
 
             if (row >= 0) 
             {
-                gridManager.logicalGrid[row, column] = currentBlock;
+                gridManager.logicalGrid[row, column] = _currentBlock;
                 Vector3 dropPosition = new Vector3(column, -row, 0);
-                currentBlockObject.transform.position = dropPosition;
+                _currentBlockObject.transform.position = dropPosition;
                 
                 poppingSystem.CheckAndPopSegments(row, column);
                 
-                currentBlockObject = null;
+                _currentBlockObject = null;
                 
                 SpawnNewBlock();
+                
+                FindObjectOfType<GameManager>().OnBlockPlaced();
             }
             else
             {
