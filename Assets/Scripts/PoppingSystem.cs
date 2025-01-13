@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -77,9 +78,38 @@ public class PoppingSystem : MonoBehaviour
         }
     }
 
-    private void PopSegments(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheckForRemoval)
+     private void PopSegments(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheckForRemoval)
     {
         FindObjectOfType<GameManager>().OnSegmentPopped(segmentsToPop.Count);
+
+        StartCoroutine(AnimateSegmentRemoval(block, segmentsToPop, blocksToCheckForRemoval));
+    }
+
+    private IEnumerator AnimateSegmentRemoval(BlockGenerator.Block block, List<BlockGenerator.Segment> segmentsToPop, List<BlockGenerator.Block> blocksToCheckForRemoval)
+    {
+        float animationDuration = 1f;
+        float elapsedTime = 0f;
+
+        List<SpriteRenderer> segmentRenderers = new List<SpriteRenderer>();
+        foreach (var segment in segmentsToPop)
+        {
+            if(segment.segmentObject.TryGetComponent(out SpriteRenderer renderer))
+                segmentRenderers.Add(renderer);
+        }
+
+        while (elapsedTime < animationDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / animationDuration);
+
+            foreach (var renderer in segmentRenderers)
+            {
+                if(renderer != null)
+                    renderer.color = new Color(renderer.color.r, renderer.color.g, renderer.color.b, alpha);
+            }
+            yield return null;
+        }
+
         foreach (var segment in segmentsToPop)
         {
             Destroy(segment.segmentObject);
@@ -104,15 +134,48 @@ public class PoppingSystem : MonoBehaviour
         }
         else
         {
-            ExpandBlock(block); 
+            ExpandBlock(block);
         }
+
         foreach (var adjacentBlock in blocksToCheckForRemoval)
         {
-            if (adjacentBlock.segments.Count > 0) 
+            if (adjacentBlock.segments.Count > 0)
             {
                 ExpandBlock(adjacentBlock);
             }
         }
+        if (segmentsToPop.Count > 0)
+        {
+            CheckAndPopSegments(FindBlockRow(block),FindBlockColumn(block));
+        }
+    }
+    private int FindBlockRow(BlockGenerator.Block block)
+    {
+        for (int row = 0; row < gridManager.logicalGridSize; row++)
+        {
+            for (int column = 0; column < gridManager.logicalGridSize; column++)
+            {
+                if (gridManager.logicalGrid[row, column] == block)
+                {
+                    return row;
+                }
+            }
+        }
+        return -1;
+    }
+    private int FindBlockColumn(BlockGenerator.Block block)
+    {
+        for (int row = 0; row < gridManager.logicalGridSize; row++)
+        {
+            for (int column = 0; column < gridManager.logicalGridSize; column++)
+            {
+                if (gridManager.logicalGrid[row, column] == block)
+                {
+                    return column;
+                }
+            }
+        }
+        return -1;
     }
 
     public void RemoveBlockFromGrid(BlockGenerator.Block block)
