@@ -148,6 +148,10 @@ public class BlockGenerator : MonoBehaviour
     public GameObject InstantiateBlock(Block block)
     {
         GameObject blockObject = new GameObject("Block");
+        if (blockObject.GetComponent<BoxCollider2D>() == null)
+        {
+            blockObject.AddComponent<BoxCollider2D>();
+        }
         block.blockObject = blockObject;
         if (blockParent != null)
         {

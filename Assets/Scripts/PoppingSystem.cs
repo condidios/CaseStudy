@@ -115,7 +115,7 @@ public class PoppingSystem : MonoBehaviour
         }
     }
 
-    private void RemoveBlockFromGrid(BlockGenerator.Block block)
+    public void RemoveBlockFromGrid(BlockGenerator.Block block)
     {
         int removedRow = -1;
         int removedColumn = -1;
